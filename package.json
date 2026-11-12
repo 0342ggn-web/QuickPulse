@@ -12,7 +12,6 @@
     "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/postcss": "^4.3.5",
     "next": "latest",
-    "postcss": "^8.5.32",
     "react": "latest",
     "react-dom": "latest",
     "stripe": "^23.1.0"
@@ -20,6 +19,9 @@
   "devDependencies": {
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
+    "autoprefixer": "^10.6.2",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^4.3.5",
     "typescript": "7.0.2"
   }
 }
