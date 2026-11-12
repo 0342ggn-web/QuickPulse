@@ -120,7 +120,7 @@ export default function DashboardPage() {
                 </ul>
               </div>
               <button
-                onClick={() => handleCheckout('mensual')}
+                onClick={() => handleCheckout('monthly')}
                 disabled={loading === 'mensual'}
                 className="mt-8 w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 rounded-xl transition"
               >
@@ -147,7 +147,7 @@ export default function DashboardPage() {
                 </ul>
               </div>
               <button
-                onClick={() => handleCheckout('trimestral')}
+                onClick={() => handleCheckout('quarterly')}
                 disabled={loading === 'trimestral'}
                 className="mt-8 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-indigo-600/30"
               >
@@ -171,11 +171,11 @@ export default function DashboardPage() {
                 </ul>
               </div>
               <button
-                onClick={() => handleCheckout('anual')}
-                disabled={loading === 'anual'}
+                onClick={() => handleCheckout('yearly')}
+                disabled={loading === 'yearly'}
                 className="mt-8 w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-3 rounded-xl transition"
               >
-                {loading === 'anual' ? 'Redirigiendo...' : 'Elegir Anual'}
+                {loading === 'yearly' ? 'Redirigiendo...' : 'Elegir yearly'}
               </button>
             </div>
 
