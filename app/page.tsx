@@ -35,6 +35,11 @@ export default function Home() {
     setInputAmount('');
   };
 
+  // Función para borrar un movimiento por su ID
+  const handleDeleteTransaction = (id: number) => {
+    setTransactions(transactions.filter((t) => t.id !== id));
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-8">
       {/* Header */}
@@ -122,7 +127,7 @@ export default function Home() {
             </button>
           </form>
 
-          {/* Lista de Últimos Movimientos */}
+          {/* Lista de Últimos Movimientos con Botón de Borrado */}
           <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Últimos Movimientos</h4>
           <div className="space-y-3">
             {transactions.length === 0 ? (
@@ -134,8 +139,17 @@ export default function Home() {
                     <div className="font-medium text-white">{t.text}</div>
                     <span className="text-xs text-slate-500">{t.date}</span>
                   </div>
-                  <div className={`font-bold ${t.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {t.amount > 0 ? `+${t.amount.toFixed(2)} €` : `${t.amount.toFixed(2)} €`}
+                  <div className="flex items-center gap-4">
+                    <div className={`font-bold ${t.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {t.amount > 0 ? `+${t.amount.toFixed(2)} €` : `${t.amount.toFixed(2)} €`}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteTransaction(t.id)}
+                      className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                      title="Eliminar movimiento"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
               ))
@@ -151,4 +165,4 @@ export default function Home() {
       </footer>
     </main>
   );
-} 
+}
