@@ -11,14 +11,12 @@ interface Transaction {
 }
 
 export default function Home() {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    { id: 1, text: 'Suscripción Pro Mensual', amount: 4.99, date: '12 de Noviembre, 2026' },
-  ]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [inputText, setInputText] = useState('');
   const [inputAmount, setInputAmount] = useState('');
 
-  // Calcular el balance total sumando los gastos/ingresos añadidos + la base inicial
-  const baseBalance = 12475.51;
+  // Balance inicial a 0
+  const baseBalance = 0;
   const totalBalance = baseBalance + transactions.reduce((acc, t) => acc + t.amount, 0);
 
   const handleAddTransaction = (e: React.FormEvent) => {
@@ -72,13 +70,13 @@ export default function Home() {
               <div className="text-3xl font-extrabold text-white mt-1">
                 {totalBalance.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
               </div>
-              <span className="text-xs text-emerald-400 font-medium mt-2 inline-block">+14% este mes</span>
+              <span className="text-xs text-slate-500 font-medium mt-2 inline-block">Sin movimientos registrados</span>
             </div>
 
             <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-5">
               <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Movimientos Activos</span>
-              <div className="text-3xl font-extrabold text-white mt-1">{1428 + transactions.length}</div>
-              <span className="text-xs text-slate-400 font-medium mt-2 inline-block">Sincronizado en tiempo real</span>
+              <div className="text-3xl font-extrabold text-white mt-1">{transactions.length}</div>
+              <span className="text-xs text-slate-500 font-medium mt-2 inline-block">Sincronizado en tiempo real</span>
             </div>
           </div>
 
@@ -127,17 +125,21 @@ export default function Home() {
           {/* Lista de Últimos Movimientos */}
           <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Últimos Movimientos</h4>
           <div className="space-y-3">
-            {transactions.map((t) => (
-              <div key={t.id} className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-white">{t.text}</div>
-                  <span className="text-xs text-slate-500">{t.date}</span>
+            {transactions.length === 0 ? (
+              <p className="text-slate-500 text-sm italic text-center py-4">No hay movimientos todavía. Añade el primero arriba.</p>
+            ) : (
+              transactions.map((t) => (
+                <div key={t.id} className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-4 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-white">{t.text}</div>
+                    <span className="text-xs text-slate-500">{t.date}</span>
+                  </div>
+                  <div className={`font-bold ${t.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {t.amount > 0 ? `+${t.amount.toFixed(2)} €` : `${t.amount.toFixed(2)} €`}
+                  </div>
                 </div>
-                <div className={`font-bold ${t.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {t.amount > 0 ? `+${t.amount.toFixed(2)} €` : `${t.amount.toFixed(2)} €`}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -149,4 +151,4 @@ export default function Home() {
       </footer>
     </main>
   );
-}
+} 
