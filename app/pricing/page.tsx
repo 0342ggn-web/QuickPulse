@@ -7,9 +7,9 @@ export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const checkoutLinks: Record<string, string> = {
-    monthly: 'https://qpulse.lemonsqueezy.com/checkout/buy/08553b4f-a66e-49de-9a5f-34bb5cbae8eb',
-    quarterly: 'https://qpulse.lemonsqueezy.com/checkout/buy/218a3438-cb52-4512-9775-b2ad92d90a9a',
-    yearly: 'https://qpulse.lemonsqueezy.com/checkout/buy/c817ef00-f139-406b-a5c7-c02feb86d78d',
+    monthly: 'https://buy.polar.sh/polar_cl_P71bBh9X9i8j2CrbZ26nv2qbIQEZNWXm0YWrQ4SyqWv',
+    quarterly: 'https://buy.polar.sh/polar_cl_dmbRCVAJmS2SFz4cWDSqq68HKxJBsMWuQBrLm3CVCKJ',
+    yearly: 'https://buy.polar.sh/polar_cl_P71bBh9X9i8j2CrbZ26nv2qbIQEZNWXm0YWrQ4SyqWv',
   };
 
   const handleCheckout = (plan: string) => {
