@@ -1,5 +1,5 @@
 'use client';
-
+import SubscribeButton from '@/components/SubscribeButton';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -47,12 +47,15 @@ export default function Home() {
         <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
           QuickPulse
         </h1>
-        <Link 
-          href="/pricing" 
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition duration-200"
-        >
-          Panel de Suscripción
-        </Link>
+<div className="flex items-center gap-4">
+  <Link
+    href="/pricing"
+    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg"
+  >
+    Panel de Suscripción
+  </Link>
+  <SubscribeButton />
+</div>
       </header>
 
       {/* Main Dashboard Content */}
