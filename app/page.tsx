@@ -2,6 +2,7 @@
 import SubscribeButton from '@/components/SubscribeButton';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useUser, SignInButton, UserButton } from '@clerk/nextjs';
 
 interface ReceiptList {
   id: string;
@@ -26,8 +27,10 @@ const DEFAULT_LISTS: ReceiptList[] = [
 const FREE_LIST_LIMIT = 3;
 
 export default function Home() {
-  // Cambia esto a true cuando conectemos el estado Pro del usuario con Polar
-  const [isPro, setIsPro] = useState(false);
+  const { isSignedIn, user } = useUser();
+
+  // Detecta automáticamente si el usuario es Pro a través de Clerk (actualizado por el Webhook)
+  const isPro = Boolean(user?.publicMetadata?.isPro);
 
   const [lists, setLists] = useState<ReceiptList[]>(DEFAULT_LISTS);
   const [activeListId, setActiveListId] = useState<string>('all');
@@ -159,6 +162,17 @@ export default function Home() {
             Panel de Suscripción
           </Link>
           <SubscribeButton />
+
+          {/* Botones de Autenticación de Clerk compatibles */}
+          {!isSignedIn ? (
+            <SignInButton mode="modal">
+              <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg transition cursor-pointer">
+                Iniciar Sesión
+              </button>
+            </SignInButton>
+          ) : (
+            <UserButton />
+          )}
         </div>
       </header>
 
@@ -168,7 +182,9 @@ export default function Home() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl">
           <div className="mb-6">
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              Bienvenido de nuevo, Usuario
+              {isSignedIn && user?.firstName
+                ? `Bienvenido de nuevo, ${user.firstName}`
+                : 'Bienvenido de nuevo, Usuario'}
             </h2>
             <p className="text-slate-400 text-sm">
               Organiza tus recibos por listas y controla tus gastos del mes.

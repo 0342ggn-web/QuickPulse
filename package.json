@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.10.2",
     "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/postcss": "^4.3.5",
     "next": "latest",
