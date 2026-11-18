@@ -161,10 +161,10 @@ export default function Home() {
           >
             Panel de Suscripción
           </Link>
-          <div className="inline-block">
-            <SubscribeButton>
-              ¡SUSCRIBETE YA! QuickPulse Pro (4,99 €/mes) POR TIEMPO LIMITADO.
-            </SubscribeButton>
+          
+          {/* Botón de suscripción corregido con texto integrado correctamente */}
+          <div className="inline-flex items-center">
+            <SubscribeButton />
           </div>
 
           {/* Botones de Autenticación de Clerk compatibles */}
