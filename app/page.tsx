@@ -148,25 +148,29 @@ export default function Home() {
   const activeListObj = lists.find((l) => l.id === activeListId);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-4 md:p-8">
-      {/* Header */}
-      <header className="w-full max-w-6xl mx-auto flex justify-between items-center py-4 border-b border-slate-800">
-        <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
+    <main className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-3 sm:p-6 md:p-10 overflow-x-hidden">
+      {/* Header adaptable */}
+      <header className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 py-4 border-b border-slate-800 text-center sm:text-left">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-cyan-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.9)] bg-gradient-to-r from-cyan-300 to-teal-400 bg-clip-text text-transparent">
           QuickPulse
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
           <Link
             href="/pricing"
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition"
+            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium rounded-lg transition"
           >
             Panel de Suscripción
           </Link>
-          <SubscribeButton />
+          <div className="inline-block">
+            <SubscribeButton>
+              ¡SUSCRIBETE YA! QuickPulse Pro (4,99 €/mes) POR TIEMPO LIMITADO.
+            </SubscribeButton>
+          </div>
 
           {/* Botones de Autenticación de Clerk compatibles */}
           {!isSignedIn ? (
             <SignInButton mode="modal">
-              <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-lg transition cursor-pointer">
+              <button className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-sm font-medium rounded-lg transition cursor-pointer">
                 Iniciar Sesión
               </button>
             </SignInButton>
@@ -177,48 +181,48 @@ export default function Home() {
       </header>
 
       {/* Main Dashboard Content */}
-      <section className="w-full max-w-4xl mx-auto my-8 space-y-6">
+      <section className="w-full max-w-4xl mx-auto my-6 space-y-6">
         
-        {/* Banner de Bienvenida con tu toque personal */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 p-6 md:p-8 text-white shadow-xl border border-indigo-500/20">
+        {/* Banner de Bienvenida optimizado para móvil */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 p-5 sm:p-8 text-white shadow-xl border border-indigo-500/20">
           <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
           
           <div className="relative z-10 max-w-3xl">
-            <span className="inline-block rounded-full bg-indigo-500/20 px-3.5 py-1 text-xs font-semibold text-indigo-300 mb-4 border border-indigo-500/30">
+            <span className="inline-block rounded-full bg-indigo-500/20 px-3.5 py-1 text-xs font-semibold text-indigo-300 mb-3 border border-indigo-500/30">
               ✨ QuickPulse Pro
             </span>
             
-            <h1 className="text-xl md:text-3xl font-extrabold tracking-tight mb-4 text-white leading-tight">
-              ¡Te doy la bienvenida a QuickPulse <span className="text-indigo-400 font-normal text-lg md:text-2xl block sm:inline">(que el nombre no te engañe)</span>!
-            </h1>
+            <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight mb-3 text-white leading-snug sm:leading-tight">
+              ¡Te doy la bienvenida a QuickPulse <span className="text-indigo-400 font-normal text-base sm:text-2xl block sm:inline">(que el nombre no te engañe)</span>!
+            </h2>
             
-            <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-              Empieza a mirar tus recibos con una sonrisa! Aquí te divertirás con las cuentas y aprenderás a controlar tus gastos hormiga para que tu día a día se llene de gratitud al ver que tus cuentas van siendo más positivas.
+            <p className="text-slate-300 text-xs sm:text-base leading-relaxed">
+              Empieza a ver tus recibos con una sonrisa! Aquí te divertirás con las cuentas y aprenderás a controlar tus gastos hormiga para que tu día a día se llene de gratitud al ver que tus cuentas van siendo más positivas.
             </p>
           </div>
         </div>
 
         {/* Tarjeta de Métricas y Saludo de Usuario */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-8 shadow-2xl">
           <div className="mb-6">
-            <h2 className="text-xl md:text-2xl font-bold text-white mb-1">
+            <h3 className="text-lg sm:text-2xl font-bold text-white mb-1">
               {isSignedIn && user?.firstName
                 ? `Hola de nuevo, ${user.firstName}`
                 : 'Hola de nuevo, Usuario'}
-            </h2>
-            <p className="text-slate-400 text-sm">
+            </h3>
+            <p className="text-slate-400 text-xs sm:text-sm">
               Organiza tus recibos por listas y controla tus gastos del mes.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+            <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-4 sm:p-5">
               <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                 {activeListId === 'all'
                   ? 'Balance Total (Todas las listas)'
                   : `Balance: ${activeListObj?.name}`}
               </span>
-              <div className="text-3xl font-extrabold text-white mt-1">
+              <div className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
                 {totalBalance.toLocaleString('es-ES', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -232,14 +236,14 @@ export default function Home() {
               </span>
             </div>
 
-            <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-5">
+            <div className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-4 sm:p-5">
               <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Listas de Recibos
               </span>
-              <div className="text-3xl font-extrabold text-white mt-1">
+              <div className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
                 {lists.length}{' '}
                 {!isPro && (
-                  <span className="text-base font-normal text-slate-500">
+                  <span className="text-sm sm:text-base font-normal text-slate-500">
                     / {FREE_LIST_LIMIT} gratis
                   </span>
                 )}
@@ -255,14 +259,14 @@ export default function Home() {
               <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Estado del Plan
               </span>
-              <div className="text-lg font-bold text-indigo-400 mt-0.5">
+              <div className="text-base sm:text-lg font-bold text-indigo-400 mt-0.5">
                 {isPro ? 'QuickPulse Pro (Listas Ilimitadas)' : 'Plan Gratuito (Hasta 3 listas)'}
               </div>
             </div>
             {!isPro && (
               <Link
                 href="/pricing"
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition duration-200 text-center"
+                className="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition duration-200 text-center"
               >
                 Desbloquear listas ilimitadas
               </Link>
@@ -271,9 +275,9 @@ export default function Home() {
         </div>
 
         {/* Selector de Listas de Recibos */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-8 shadow-2xl">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h3 className="text-lg font-bold text-white">Tus Listas de Recibos</h3>
+            <h3 className="text-base sm:text-lg font-bold text-white">Tus Listas de Recibos</h3>
             <button
               onClick={handleNewListClick}
               className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 text-xs font-semibold rounded-lg transition cursor-pointer"
@@ -284,7 +288,7 @@ export default function Home() {
 
           {/* Aviso de Límite Alcanzado (Paywall) */}
           {showPaywallAlert && (
-            <div className="mb-6 bg-indigo-950/60 border border-indigo-500/50 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="mb-6 bg-indigo-950/60 border border-indigo-500/50 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h4 className="font-bold text-indigo-300 text-sm">
                   🔒 Has alcanzado el límite de 3 listas gratuitas
@@ -293,10 +297,10 @@ export default function Home() {
                   Crea listas ilimitadas para separar luz, agua, alquiler, suscripciones o viajes con QuickPulse Pro.
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
                 <Link
                   href="/pricing"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-600/30"
+                  className="w-full sm:w-auto text-center px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition shadow-lg shadow-indigo-600/30"
                 >
                   Ver Planes Pro
                 </Link>
@@ -312,7 +316,7 @@ export default function Home() {
 
           {/* Formulario rápido para crear nueva lista */}
           {isAddingList && (
-            <form onSubmit={handleCreateList} className="mb-6 flex gap-2">
+            <form onSubmit={handleCreateList} className="mb-6 flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 placeholder="Nombre de la lista (ej. Coche, Gimnasio...)"
@@ -323,7 +327,7 @@ export default function Home() {
               />
               <button
                 type="submit"
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition cursor-pointer"
               >
                 Crear
               </button>
@@ -331,10 +335,10 @@ export default function Home() {
           )}
 
           {/* Pestañas de Listas */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
             <button
               onClick={() => setActiveListId('all')}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
+              className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer ${
                 activeListId === 'all'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                   : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
@@ -352,7 +356,7 @@ export default function Home() {
                       setActiveListId(list.id);
                       setSelectedFormList(list.id);
                     }}
-                    className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-2 ${
+                    className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-2 ${
                       activeListId === list.id
                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                         : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
@@ -377,14 +381,14 @@ export default function Home() {
           </div>
 
           {/* Sección para Añadir Gastos / Movimientos */}
-          <h3 className="text-lg font-bold mb-4">
+          <h3 className="text-base sm:text-lg font-bold mb-3">
             Añadir Recibo o Movimiento{' '}
             {activeListId !== 'all' && activeListObj ? `en ${activeListObj.name}` : ''}
           </h3>
 
           <form
             onSubmit={handleAddTransaction}
-            className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-8"
           >
             {activeListId === 'all' && (
               <select
@@ -428,7 +432,7 @@ export default function Home() {
           </form>
 
           {/* Lista de Últimos Movimientos */}
-          <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
+          <h4 className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
             {activeListId === 'all'
               ? 'Todos los Recibos'
               : `Recibos en ${activeListObj?.name}`}
@@ -436,7 +440,7 @@ export default function Home() {
 
           <div className="space-y-3">
             {filteredTransactions.length === 0 ? (
-              <p className="text-slate-500 text-sm italic text-center py-4">
+              <p className="text-slate-500 text-xs sm:text-sm italic text-center py-4">
                 No hay recibos en esta lista todavía. Añade el primero arriba.
               </p>
             ) : (
@@ -445,22 +449,22 @@ export default function Home() {
                 return (
                   <div
                     key={t.id}
-                    className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-4 flex items-center justify-between"
+                    className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4"
                   >
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-white">{t.text}</span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-sm sm:text-base text-white">{t.text}</span>
                         {activeListId === 'all' && parentList && (
-                          <span className="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] sm:text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">
                             {parentList.icon} {parentList.name}
                           </span>
                         )}
                       </div>
                       <span className="text-xs text-slate-500">{t.date}</span>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800/80">
                       <div
-                        className={`font-bold ${
+                        className={`font-bold text-sm sm:text-base ${
                           t.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'
                         }`}
                       >
