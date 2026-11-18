@@ -178,13 +178,33 @@ export default function Home() {
 
       {/* Main Dashboard Content */}
       <section className="w-full max-w-4xl mx-auto my-8 space-y-6">
-        {/* Tarjeta de Bienvenida y Métricas */}
+        
+        {/* Banner de Bienvenida con tu toque personal */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 p-6 md:p-8 text-white shadow-xl border border-indigo-500/20">
+          <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none" />
+          
+          <div className="relative z-10 max-w-3xl">
+            <span className="inline-block rounded-full bg-indigo-500/20 px-3.5 py-1 text-xs font-semibold text-indigo-300 mb-4 border border-indigo-500/30">
+              ✨ QuickPulse Pro
+            </span>
+            
+            <h1 className="text-xl md:text-3xl font-extrabold tracking-tight mb-4 text-white leading-tight">
+              ¡Te doy la bienvenida a QuickPulse <span className="text-indigo-400 font-normal text-lg md:text-2xl block sm:inline">(que el nombre no te engañe)</span>!
+            </h1>
+            
+            <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+              Empieza a mirar tus recibos con una sonrisa! Aquí te divertirás con las cuentas y aprenderás a controlar tus gastos hormiga para que tu día a día se llene de gratitud al ver que tus cuentas van siendo más positivas.
+            </p>
+          </div>
+        </div>
+
+        {/* Tarjeta de Métricas y Saludo de Usuario */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl">
           <div className="mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+            <h2 className="text-xl md:text-2xl font-bold text-white mb-1">
               {isSignedIn && user?.firstName
-                ? `Bienvenido de nuevo, ${user.firstName}`
-                : 'Bienvenido de nuevo, Usuario'}
+                ? `Hola de nuevo, ${user.firstName}`
+                : 'Hola de nuevo, Usuario'}
             </h2>
             <p className="text-slate-400 text-sm">
               Organiza tus recibos por listas y controla tus gastos del mes.
