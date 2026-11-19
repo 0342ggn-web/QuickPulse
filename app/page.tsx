@@ -149,9 +149,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-3 sm:p-6 md:p-10 overflow-x-hidden">
-      {/* Header adaptable: título a la derecha en móvil y botones debajo */}
-      <header className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 py-4 border-b border-slate-800">
-        <h1 className="w-full sm:w-auto text-right sm:text-left text-2xl sm:text-3xl font-extrabold tracking-tight text-cyan-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.9)] bg-gradient-to-r from-cyan-300 to-teal-400 bg-clip-text text-transparent">
+      {/* Header adaptable */}
+      <header className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 py-4 border-b border-slate-800 text-center sm:text-left">
+        <h1 className="w-full sm:w-auto text-center sm:text-left text-2xl sm:text-3xl font-extrabold tracking-tight text-cyan-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.9)] bg-gradient-to-r from-cyan-300 to-teal-400 bg-clip-text text-transparent">
           QuickPulse
         </h1>
         <div className="w-full sm:w-auto flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-start sm:justify-end gap-2 sm:gap-4">
@@ -195,10 +195,9 @@ export default function Home() {
 
             <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight mb-3 text-white leading-snug sm:leading-tight">
               ¡Te doy la bienvenida a QuickPulse{' '}
-              <span className="text-indigo-400 font-normal text-base sm:text-2xl block sm:inline">
-                (que el nombre no te engañe)
+              <span className="text-indigo-400 font-normal text-base sm:text-2xl whitespace-nowrap">
+                (que el nombre no te engañe)!
               </span>
-              !
             </h2>
 
             <p className="text-slate-300 text-xs sm:text-base leading-relaxed">
