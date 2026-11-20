@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { Outfit } from 'next/font/google';
+import { Permanent_Marker } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
-const outfit = Outfit({
+const graffiti = Permanent_Marker({
   subsets: ['latin'],
-  weight: ['700', '800', '900'],
-  variable: '--font-outfit',
+  weight: ['400'],
+  variable: '--font-graffiti',
 });
 
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="es" className={outfit.variable}>
+      <html lang="es" className={graffiti.variable}>
         <body className="font-sans antialiased bg-slate-950 text-white">
           {children}
         </body>

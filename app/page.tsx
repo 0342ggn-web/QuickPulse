@@ -440,36 +440,57 @@ export default function Home() {
         </div>
       )}
 
-      {/* Header adaptable */}
-      <header className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 py-4 border-b border-slate-800 text-center sm:text-left">
-        <h1
-          style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
-          className="w-full sm:w-auto text-center sm:text-left text-3xl sm:text-4xl font-black tracking-tight uppercase italic bg-gradient-to-r from-cyan-300 via-teal-300 to-indigo-400 bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(34,211,238,0.35)]"
-        >
-          QuickPulse
-        </h1>
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-start sm:justify-end gap-2 sm:gap-4">
+      {/* Header centrado estilo muro grafiti con botones debajo */}
+      <header className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center gap-5 py-6 border-b border-slate-800 text-center">
+        <div className="relative inline-flex items-center justify-center px-4 py-1">
+          {/* Halo de luz detrás del título */}
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 via-amber-400/20 to-fuchsia-500/20 blur-2xl rounded-full pointer-events-none" />
+
+          <h1
+            style={{ fontFamily: 'var(--font-graffiti), cursive, sans-serif' }}
+            className="relative z-10 flex items-center justify-center gap-1 sm:gap-2 text-4xl sm:text-6xl md:text-7xl tracking-wider select-none -rotate-2"
+          >
+            {/* Palabra 1: Quick en cian eléctrico */}
+            <span className="text-cyan-300 drop-shadow-[0_4px_0_#0f172a] [text-shadow:0_0_22px_rgba(34,211,238,0.85),3px_3px_0px_#083344]">
+              Quick
+            </span>
+
+            {/* Palabra 2: Pulse en magenta/rosa neón */}
+            <span className="text-fuchsia-400 drop-shadow-[0_4px_0_#0f172a] [text-shadow:0_0_22px_rgba(232,121,249,0.85),3px_3px_0px_#4a044e]">
+              Pulse
+            </span>
+
+            {/* Chispa brillante animada */}
+            <span
+              aria-hidden="true"
+              className="ml-1 -mt-5 sm:-mt-7 text-2xl sm:text-4xl text-amber-300 animate-pulse drop-shadow-[0_0_16px_rgba(253,224,71,1)]"
+            >
+              ✦
+            </span>
+          </h1>
+        </div>
+
+        {/* Los 3 botones centrados debajo del título */}
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-2.5 sm:gap-4">
           <Link
             href="/pricing"
-            className="w-full sm:w-auto px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium rounded-lg transition text-center"
+            className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium rounded-lg transition text-center"
           >
             Panel de Suscripción
           </Link>
 
-          {/* Botón de suscripción con texto actualizado en su componente */}
           <div className="w-full sm:w-auto flex justify-center sm:inline-flex items-center">
             <SubscribeButton />
           </div>
 
-          {/* Botones de Autenticación de Clerk compatibles */}
           {!isSignedIn ? (
             <SignInButton mode="modal">
-              <button className="w-full sm:w-auto px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-sm font-medium rounded-lg transition cursor-pointer">
+              <button className="w-full sm:w-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-sm font-medium rounded-lg transition cursor-pointer">
                 Iniciar Sesión
               </button>
             </SignInButton>
           ) : (
-            <div className="flex justify-end">
+            <div className="flex justify-center">
               <UserButton />
             </div>
           )}
