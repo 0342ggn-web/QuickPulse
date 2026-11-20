@@ -1,6 +1,6 @@
 'use client';
 import SubscribeButton from '@/components/SubscribeButton';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useUser, useClerk, SignInButton, UserButton } from '@clerk/nextjs';
 
@@ -47,6 +47,9 @@ export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [cloudSynced, setCloudSynced] = useState(false);
 
+  // Recordar si el usuario estuvo autenticado para limpiar al cerrar sesión
+  const wasSignedInRef = useRef<boolean>(false);
+
   const [inputText, setInputText] = useState('');
   const [inputAmount, setInputAmount] = useState('');
   const [selectedFormList, setSelectedFormList] = useState<string>('comida');
@@ -61,9 +64,46 @@ export default function Home() {
   const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
   const [showNudgeBalloon, setShowNudgeBalloon] = useState(false);
 
-  // Cargar datos iniciales: si no ha iniciado sesión, usa localStorage; si sí, fusiona y carga desde Supabase
+  // Cargar datos iniciales o limpiar al cerrar sesión
   useEffect(() => {
     if (!isLoaded) return;
+
+    if (!isSignedIn) {
+      setCloudSynced(false);
+
+      // Si acaba de cerrar sesión, limpiar datos de la cuenta y dejar modo invitado limpio
+      if (wasSignedInRef.current) {
+        wasSignedInRef.current = false;
+        localStorage.removeItem('quickpulse_lists');
+        localStorage.removeItem('quickpulse_transactions');
+        localStorage.removeItem('quickpulse_pending_tx');
+        setLists(DEFAULT_LISTS);
+        setTransactions([]);
+        setActiveListId('all');
+        setSelectedFormList(DEFAULT_LISTS[0].id);
+        setTrialStatus(null);
+        setShowNudgeBalloon(false);
+        return;
+      }
+
+      const savedListsRaw = localStorage.getItem('quickpulse_lists');
+      const savedTransactionsRaw = localStorage.getItem('quickpulse_transactions');
+      const localLists: ReceiptList[] | null = savedListsRaw ? JSON.parse(savedListsRaw) : null;
+      const localTransactions: Transaction[] = savedTransactionsRaw
+        ? JSON.parse(savedTransactionsRaw)
+        : [];
+
+      if (localLists && localLists.length > 0) {
+        setLists(localLists);
+        setSelectedFormList(localLists[0].id);
+      } else {
+        setLists(DEFAULT_LISTS);
+      }
+      setTransactions(localTransactions);
+      return;
+    }
+
+    wasSignedInRef.current = true;
 
     const savedListsRaw = localStorage.getItem('quickpulse_lists');
     const savedTransactionsRaw = localStorage.getItem('quickpulse_transactions');
@@ -74,18 +114,6 @@ export default function Home() {
       ? JSON.parse(savedTransactionsRaw)
       : [];
     const pendingTx: Transaction | null = pendingTxRaw ? JSON.parse(pendingTxRaw) : null;
-
-    if (!isSignedIn) {
-      setCloudSynced(false);
-      if (localLists && localLists.length > 0) {
-        setLists(localLists);
-        setSelectedFormList(localLists[0].id);
-      } else {
-        setLists(DEFAULT_LISTS);
-      }
-      setTransactions(localTransactions);
-      return;
-    }
 
     const loadCloudData = async () => {
       try {
@@ -108,7 +136,7 @@ export default function Home() {
         }
         const mergedLists = Array.from(mergedListsMap.values());
 
-        // Combinar recibos de la nube + los 2 de prueba locales + el 3.º pendiente al iniciar sesión
+        // Combinar recibos de la nube + los de prueba locales + el pendiente al iniciar sesión
         const mergedTxMap = new Map<number, Transaction>();
         cloudTx.forEach((t) => mergedTxMap.set(t.id, t));
         localTransactions.forEach((t) => mergedTxMap.set(t.id, t));
@@ -122,7 +150,6 @@ export default function Home() {
         setTransactions(mergedTx);
         if (mergedLists.length > 0) setSelectedFormList(mergedLists[0].id);
 
-        // Si había recibos/listas locales o un 3.º recibo pendiente, subirlos a Supabase
         const hasNewToUpload =
           cloudLists.length === 0 || localTransactions.length > 0 || Boolean(pendingTx);
 
@@ -152,15 +179,15 @@ export default function Home() {
     loadCloudData();
   }, [isLoaded, isSignedIn, user?.id]);
 
-  // Mantener copia en localStorage solo para invitados (sin sesión)
+  // Guardar en localStorage únicamente cuando el usuario NO ha iniciado sesión y está operando como invitado
   useEffect(() => {
-    if (!isSignedIn && isLoaded) {
+    if (!isSignedIn && isLoaded && !wasSignedInRef.current) {
       localStorage.setItem('quickpulse_lists', JSON.stringify(lists));
     }
   }, [lists, isSignedIn, isLoaded]);
 
   useEffect(() => {
-    if (!isSignedIn && isLoaded) {
+    if (!isSignedIn && isLoaded && !wasSignedInRef.current) {
       localStorage.setItem('quickpulse_transactions', JSON.stringify(transactions));
     }
   }, [transactions, isSignedIn, isLoaded]);
