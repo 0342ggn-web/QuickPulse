@@ -1,27 +1,30 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
-import './globals.css';
+import { Outfit } from 'next/font/google';
 import { ClerkProvider } from '@clerk/nextjs';
+import './globals.css';
 
-const font = Plus_Jakarta_Sans({
+const outfit = Outfit({
   subsets: ['latin'],
-  weight: ['400', '600', '700', '800'],
+  weight: ['700', '800', '900'],
+  variable: '--font-outfit',
 });
 
 export const metadata: Metadata = {
   title: 'QuickPulse',
-  description: 'Hábitos y gastos al instante',
+  description: 'Organiza tus recibos por listas y controla tus gastos del mes.',
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <ClerkProvider>
-      <html lang="es">
-        <body className={font.className}>{children}</body>
+      <html lang="es" className={outfit.variable}>
+        <body className="font-sans antialiased bg-slate-950 text-white">
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   );

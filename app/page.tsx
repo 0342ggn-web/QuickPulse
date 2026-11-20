@@ -442,7 +442,10 @@ export default function Home() {
 
       {/* Header adaptable */}
       <header className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 py-4 border-b border-slate-800 text-center sm:text-left">
-        <h1 className="w-full sm:w-auto text-center sm:text-left text-2xl sm:text-3xl font-extrabold tracking-tight text-cyan-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.9)] bg-gradient-to-r from-cyan-300 to-teal-400 bg-clip-text text-transparent">
+        <h1
+          style={{ fontFamily: 'var(--font-outfit), sans-serif' }}
+          className="w-full sm:w-auto text-center sm:text-left text-3xl sm:text-4xl font-black tracking-tight uppercase italic bg-gradient-to-r from-cyan-300 via-teal-300 to-indigo-400 bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(34,211,238,0.35)]"
+        >
           QuickPulse
         </h1>
         <div className="w-full sm:w-auto flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-start sm:justify-end gap-2 sm:gap-4">
