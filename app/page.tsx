@@ -2,7 +2,7 @@
 import SubscribeButton from '@/components/SubscribeButton';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useUser, SignInButton, UserButton } from '@clerk/nextjs';
+import { useUser, useClerk, SignInButton, UserButton } from '@clerk/nextjs';
 
 interface ReceiptList {
   id: string;
@@ -18,6 +18,14 @@ interface Transaction {
   date: string;
 }
 
+interface TrialStatus {
+  daysElapsed: number;
+  daysRemaining: number;
+  isTrialExpired: boolean;
+  shouldShowNudge: boolean;
+  currentMilestone: number;
+}
+
 const DEFAULT_LISTS: ReceiptList[] = [
   { id: 'comida', name: 'Comida', icon: '🍔' },
   { id: 'casa', name: 'Casa (Luz, Agua...)', icon: '🏠' },
@@ -25,9 +33,11 @@ const DEFAULT_LISTS: ReceiptList[] = [
 ];
 
 const FREE_LIST_LIMIT = 3;
+const GUEST_RECEIPT_LIMIT = 2;
 
 export default function Home() {
   const { isSignedIn, user } = useUser();
+  const { openSignIn } = useClerk();
 
   // Detecta automáticamente si el usuario es Pro a través de Clerk (actualizado por el Webhook)
   const isPro = Boolean(user?.publicMetadata?.isPro);
@@ -44,6 +54,11 @@ export default function Home() {
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [showPaywallAlert, setShowPaywallAlert] = useState(false);
+  const [paywallReason, setPaywallReason] = useState<'lists' | 'trial_expired'>('lists');
+
+  // Estados de prueba de 30 días y globo cada 10 días
+  const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
+  const [showNudgeBalloon, setShowNudgeBalloon] = useState(false);
 
   // Cargar datos guardados en el navegador al abrir la app
   useEffect(() => {
@@ -68,6 +83,47 @@ export default function Home() {
     localStorage.setItem('quickpulse_transactions', JSON.stringify(transactions));
   }, [transactions]);
 
+  // Consultar estado de la prueba de 30 días en Supabase cuando inicia sesión
+  useEffect(() => {
+    if (!isSignedIn || isPro) {
+      setTrialStatus(null);
+      setShowNudgeBalloon(false);
+      return;
+    }
+
+    const fetchTrialStatus = async () => {
+      try {
+        const res = await fetch('/api/trial');
+        if (!res.ok) return;
+        const data: TrialStatus = await res.json();
+        setTrialStatus(data);
+        if (data.shouldShowNudge) {
+          setShowNudgeBalloon(true);
+        }
+      } catch {
+        // Ignorar errores puntuales de red
+      }
+    };
+
+    fetchTrialStatus();
+  }, [isSignedIn, isPro]);
+
+  // Cerrar globo de 10 días y registrarlo en Supabase para no repetirlo hasta dentro de 10 días
+  const handleDismissNudge = async () => {
+    setShowNudgeBalloon(false);
+    if (!trialStatus?.currentMilestone) return;
+
+    try {
+      await fetch('/api/trial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ milestone: trialStatus.currentMilestone }),
+      });
+    } catch {
+      // Ignorar errores de red al cerrar
+    }
+  };
+
   // Filtrar movimientos según la lista seleccionada
   const filteredTransactions =
     activeListId === 'all'
@@ -79,6 +135,19 @@ export default function Home() {
   const handleAddTransaction = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText || !inputAmount) return;
+
+    // 1. Permitir 2 recibos sin sesión; al 3.º pedir registro/inicio de sesión sin tarjeta
+    if (!isSignedIn && transactions.length >= GUEST_RECEIPT_LIMIT) {
+      openSignIn();
+      return;
+    }
+
+    // 2. Si inició sesión, no es Pro y ya pasaron sus 30 días de prueba, mostrar muro de suscripción
+    if (isSignedIn && !isPro && trialStatus?.isTrialExpired) {
+      setPaywallReason('trial_expired');
+      setShowPaywallAlert(true);
+      return;
+    }
 
     const targetList = activeListId === 'all' ? selectedFormList : activeListId;
 
@@ -103,9 +172,17 @@ export default function Home() {
     setTransactions(transactions.filter((t) => t.id !== id));
   };
 
-  // Botón "+ Nueva Lista" con comprobación del límite gratuito
+  // Botón "+ Nueva Lista" con comprobación del límite gratuito o fin de prueba
   const handleNewListClick = () => {
+    if (isSignedIn && !isPro && trialStatus?.isTrialExpired) {
+      setPaywallReason('trial_expired');
+      setShowPaywallAlert(true);
+      setIsAddingList(false);
+      return;
+    }
+
     if (!isPro && lists.length >= FREE_LIST_LIMIT) {
+      setPaywallReason('lists');
       setShowPaywallAlert(true);
       setIsAddingList(false);
       return;
@@ -119,6 +196,7 @@ export default function Home() {
     if (!newListName.trim()) return;
 
     if (!isPro && lists.length >= FREE_LIST_LIMIT) {
+      setPaywallReason('lists');
       setShowPaywallAlert(true);
       return;
     }
@@ -149,6 +227,47 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-3 sm:p-6 md:p-10 overflow-x-hidden">
+      {/* Globo flotante cada 10 días durante la prueba */}
+      {showNudgeBalloon && !isPro && (
+        <div className="fixed bottom-5 right-5 left-5 sm:left-auto sm:max-w-sm z-50 bg-gradient-to-br from-indigo-600 via-indigo-700 to-cyan-700 text-white p-5 rounded-2xl shadow-2xl border border-cyan-300/40 animate-bounce">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">💬</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider bg-white/20 px-2.5 py-0.5 rounded-full">
+                QuickPulse te recuerda
+              </span>
+            </div>
+            <button
+              onClick={handleDismissNudge}
+              className="text-white/80 hover:text-white text-sm font-bold cursor-pointer px-1"
+              title="Cerrar mensaje"
+            >
+              ✕
+            </button>
+          </div>
+
+          <p className="mt-3 text-sm sm:text-base font-extrabold leading-snug tracking-tight">
+            SOY TU APP FAVORITA PARA AYUDARTE CON TUS RECIBOS. ¡CONTRATAME YA!
+          </p>
+
+          <div className="mt-4 flex items-center gap-2">
+            <Link
+              href="/pricing"
+              onClick={handleDismissNudge}
+              className="flex-1 text-center px-4 py-2 bg-white text-indigo-950 hover:bg-cyan-100 text-xs font-extrabold rounded-xl transition shadow-md"
+            >
+              ¡Contratar ahora!
+            </Link>
+            <button
+              onClick={handleDismissNudge}
+              className="px-3 py-2 bg-indigo-950/40 hover:bg-indigo-950/60 text-white/90 text-xs font-medium rounded-xl transition cursor-pointer"
+            >
+              Luego
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header adaptable */}
       <header className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 py-4 border-b border-slate-800 text-center sm:text-left">
         <h1 className="w-full sm:w-auto text-center sm:text-left text-2xl sm:text-3xl font-extrabold tracking-tight text-cyan-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.9)] bg-gradient-to-r from-cyan-300 to-teal-400 bg-clip-text text-transparent">
@@ -264,7 +383,15 @@ export default function Home() {
                 Estado del Plan
               </span>
               <div className="text-base sm:text-lg font-bold text-indigo-400 mt-0.5">
-                {isPro ? 'QuickPulse Pro (Listas Ilimitadas)' : 'Plan Gratuito (Hasta 3 listas)'}
+                {isPro
+                  ? 'QuickPulse Pro (Listas Ilimitadas)'
+                  : !isSignedIn
+                  ? `Prueba rápida (${Math.max(0, GUEST_RECEIPT_LIMIT - transactions.length)} recibos antes de registrarte)`
+                  : trialStatus?.isTrialExpired
+                  ? 'Periodo de prueba finalizado'
+                  : trialStatus
+                  ? `Mes de Prueba Gratis (${trialStatus.daysRemaining} días restantes, sin tarjeta)`
+                  : 'Mes de Prueba Gratis (30 días sin tarjeta)'}
               </div>
             </div>
             {!isPro && (
@@ -295,10 +422,14 @@ export default function Home() {
             <div className="mb-6 bg-indigo-950/60 border border-indigo-500/50 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h4 className="font-bold text-indigo-300 text-sm">
-                  🔒 Has alcanzado el límite de 3 listas gratuitas
+                  {paywallReason === 'trial_expired'
+                    ? '⏳ Tu mes gratuito de prueba ha terminado'
+                    : '🔒 Has alcanzado el límite de 3 listas gratuitas'}
                 </h4>
                 <p className="text-slate-300 text-xs mt-1">
-                  Crea listas ilimitadas para separar luz, agua, alquiler, suscripciones o viajes con QuickPulse Pro.
+                  {paywallReason === 'trial_expired'
+                    ? 'Suscríbete ahora para seguir añadiendo recibos y disfrutar de todas las funciones sin límites.'
+                    : 'Crea listas ilimitadas para separar luz, agua, alquiler, suscripciones o viajes con QuickPulse Pro.'}
                 </p>
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
@@ -310,7 +441,7 @@ export default function Home() {
                 </Link>
                 <button
                   onClick={() => setShowPaywallAlert(false)}
-                  className="px-2 py-2 text-slate-400 hover:text-white text-xs"
+                  className="px-2 py-2 text-slate-400 hover:text-white text-xs cursor-pointer"
                 >
                   ✕
                 </button>
@@ -385,10 +516,19 @@ export default function Home() {
           </div>
 
           {/* Sección para Añadir Gastos / Movimientos */}
-          <h3 className="text-base sm:text-lg font-bold mb-3">
-            Añadir Recibo o Movimiento{' '}
-            {activeListId !== 'all' && activeListObj ? `en ${activeListObj.name}` : ''}
-          </h3>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 className="text-base sm:text-lg font-bold">
+              Añadir Recibo o Movimiento{' '}
+              {activeListId !== 'all' && activeListObj ? `en ${activeListObj.name}` : ''}
+            </h3>
+            {!isSignedIn && (
+              <span className="text-xs text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 px-2.5 py-1 rounded-lg">
+                {transactions.length < GUEST_RECEIPT_LIMIT
+                  ? `Te quedan ${GUEST_RECEIPT_LIMIT - transactions.length} recibo(s) de prueba sin registro`
+                  : 'Inicia sesión gratis (sin tarjeta) para seguir añadiendo 30 días'}
+              </span>
+            )}
+          </div>
 
           <form
             onSubmit={handleAddTransaction}
@@ -431,7 +571,9 @@ export default function Home() {
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl px-4 py-3 transition duration-200 text-sm cursor-pointer shadow-lg shadow-indigo-600/30"
             >
-              Añadir recibo
+              {!isSignedIn && transactions.length >= GUEST_RECEIPT_LIMIT
+                ? 'Crear cuenta gratis (30 días)'
+                : 'Añadir recibo'}
             </button>
           </form>
 
