@@ -7,7 +7,7 @@ export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const checkoutLinks: Record<string, string> = {
-    monthly: 'https://buy.polar.sh/polar_cl_P71bBh9X9i8j2CrbZ26nv2qbIQEZNWXm0YWrQ4SyqWv',
+    monthly: 'https://buy.polar.sh/polar_cl_WEV6Q2iMrTdWynWUItogzdvOqO7TUbFfFXA1d1391Wg',
     quarterly: 'https://buy.polar.sh/polar_cl_dmbRCVAJmS2SFz4cWDSqq68HKxJBsMWuQBrLm3CVCKJ',
     yearly: 'https://buy.polar.sh/polar_cl_P71bBh9X9i8j2CrbZ26nv2qbIQEZNWXm0YWrQ4SyqWv',
   };
