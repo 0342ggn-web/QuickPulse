@@ -36,7 +36,7 @@ const FREE_LIST_LIMIT = 3;
 const GUEST_RECEIPT_LIMIT = 2;
 
 export default function Home() {
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, user, isLoaded } = useUser();
   const { openSignIn } = useClerk();
 
   // Detecta automáticamente si el usuario es Pro a través de Clerk (actualizado por el Webhook)
@@ -45,6 +45,7 @@ export default function Home() {
   const [lists, setLists] = useState<ReceiptList[]>(DEFAULT_LISTS);
   const [activeListId, setActiveListId] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [cloudSynced, setCloudSynced] = useState(false);
 
   const [inputText, setInputText] = useState('');
   const [inputAmount, setInputAmount] = useState('');
@@ -60,28 +61,89 @@ export default function Home() {
   const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
   const [showNudgeBalloon, setShowNudgeBalloon] = useState(false);
 
-  // Cargar datos guardados en el navegador al abrir la app
+  // Cargar datos iniciales: si no ha iniciado sesión, usa localStorage; si sí, carga desde Supabase
   useEffect(() => {
-    const savedLists = localStorage.getItem('quickpulse_lists');
-    const savedTransactions = localStorage.getItem('quickpulse_transactions');
-    if (savedLists) {
-      const parsedLists = JSON.parse(savedLists);
-      setLists(parsedLists);
-      if (parsedLists.length > 0) setSelectedFormList(parsedLists[0].id);
-    }
-    if (savedTransactions) {
-      setTransactions(JSON.parse(savedTransactions));
-    }
-  }, []);
+    if (!isLoaded) return;
 
-  // Guardar automáticamente cada cambio
+    const savedListsRaw = localStorage.getItem('quickpulse_lists');
+    const savedTransactionsRaw = localStorage.getItem('quickpulse_transactions');
+    const localLists: ReceiptList[] | null = savedListsRaw ? JSON.parse(savedListsRaw) : null;
+    const localTransactions: Transaction[] | null = savedTransactionsRaw
+      ? JSON.parse(savedTransactionsRaw)
+      : null;
+
+    if (!isSignedIn) {
+      setCloudSynced(false);
+      if (localLists && localLists.length > 0) {
+        setLists(localLists);
+        setSelectedFormList(localLists[0].id);
+      } else {
+        setLists(DEFAULT_LISTS);
+      }
+      if (localTransactions) {
+        setTransactions(localTransactions);
+      }
+      return;
+    }
+
+    const loadCloudData = async () => {
+      try {
+        const res = await fetch('/api/data');
+        if (!res.ok) return;
+        const cloudData: { lists: ReceiptList[]; transactions: Transaction[] } =
+          await res.json();
+
+        const hasCloudLists = cloudData.lists && cloudData.lists.length > 0;
+        const hasCloudTx = cloudData.transactions && cloudData.transactions.length > 0;
+
+        if (hasCloudLists || hasCloudTx) {
+          const finalLists = hasCloudLists ? cloudData.lists : DEFAULT_LISTS;
+          const finalTx = cloudData.transactions || [];
+          setLists(finalLists);
+          setTransactions(finalTx);
+          if (finalLists.length > 0) setSelectedFormList(finalLists[0].id);
+        } else {
+          // Primera vez en la nube: subir listas por defecto o lo que haya probado en localStorage
+          const initialLists =
+            localLists && localLists.length > 0 ? localLists : DEFAULT_LISTS;
+          const initialTx = localTransactions || [];
+
+          setLists(initialLists);
+          setTransactions(initialTx);
+          if (initialLists.length > 0) setSelectedFormList(initialLists[0].id);
+
+          await fetch('/api/data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'sync_initial',
+              lists: initialLists,
+              transactions: initialTx,
+            }),
+          });
+        }
+
+        setCloudSynced(true);
+      } catch {
+        // Ignorar errores puntuales de red
+      }
+    };
+
+    loadCloudData();
+  }, [isLoaded, isSignedIn, user?.id]);
+
+  // Mantener copia en localStorage solo para invitados (sin sesión)
   useEffect(() => {
-    localStorage.setItem('quickpulse_lists', JSON.stringify(lists));
-  }, [lists]);
+    if (!isSignedIn) {
+      localStorage.setItem('quickpulse_lists', JSON.stringify(lists));
+    }
+  }, [lists, isSignedIn]);
 
   useEffect(() => {
-    localStorage.setItem('quickpulse_transactions', JSON.stringify(transactions));
-  }, [transactions]);
+    if (!isSignedIn) {
+      localStorage.setItem('quickpulse_transactions', JSON.stringify(transactions));
+    }
+  }, [transactions, isSignedIn]);
 
   // Consultar estado de la prueba de 30 días en Supabase cuando inicia sesión
   useEffect(() => {
@@ -132,7 +194,7 @@ export default function Home() {
 
   const totalBalance = filteredTransactions.reduce((acc, t) => acc + t.amount, 0);
 
-  const handleAddTransaction = (e: React.FormEvent) => {
+  const handleAddTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText || !inputAmount) return;
 
@@ -166,10 +228,40 @@ export default function Home() {
     setTransactions([newTransaction, ...transactions]);
     setInputText('');
     setInputAmount('');
+
+    if (isSignedIn && cloudSynced) {
+      try {
+        await fetch('/api/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'add_transaction',
+            transaction: newTransaction,
+          }),
+        });
+      } catch {
+        // Ignorar errores puntuales de red
+      }
+    }
   };
 
-  const handleDeleteTransaction = (id: number) => {
+  const handleDeleteTransaction = async (id: number) => {
     setTransactions(transactions.filter((t) => t.id !== id));
+
+    if (isSignedIn && cloudSynced) {
+      try {
+        await fetch('/api/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'delete_transaction',
+            id,
+          }),
+        });
+      } catch {
+        // Ignorar errores puntuales de red
+      }
+    }
   };
 
   // Botón "+ Nueva Lista" con comprobación del límite gratuito o fin de prueba
@@ -191,7 +283,7 @@ export default function Home() {
     setIsAddingList(!isAddingList);
   };
 
-  const handleCreateList = (e: React.FormEvent) => {
+  const handleCreateList = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newListName.trim()) return;
 
@@ -212,15 +304,45 @@ export default function Home() {
     setSelectedFormList(newList.id);
     setNewListName('');
     setIsAddingList(false);
+
+    if (isSignedIn && cloudSynced) {
+      try {
+        await fetch('/api/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'add_list',
+            list: newList,
+          }),
+        });
+      } catch {
+        // Ignorar errores puntuales de red
+      }
+    }
   };
 
-  const handleDeleteList = (listId: string) => {
+  const handleDeleteList = async (listId: string) => {
     if (lists.length <= 1) return; // Mantener al menos 1 lista
     const updatedLists = lists.filter((l) => l.id !== listId);
     setLists(updatedLists);
     setTransactions(transactions.filter((t) => t.listId !== listId));
     if (activeListId === listId) setActiveListId('all');
     setShowPaywallAlert(false);
+
+    if (isSignedIn && cloudSynced) {
+      try {
+        await fetch('/api/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'delete_list',
+            listId,
+          }),
+        });
+      } catch {
+        // Ignorar errores puntuales de red
+      }
+    }
   };
 
   const activeListObj = lists.find((l) => l.id === activeListId);
@@ -334,7 +456,9 @@ export default function Home() {
                 : 'Hola de nuevo, Usuario'}
             </h3>
             <p className="text-slate-400 text-xs sm:text-sm">
-              Organiza tus recibos por listas y controla tus gastos del mes.
+              {isSignedIn
+                ? 'Tus listas y recibos están guardados en tu cuenta para verlos desde cualquier dispositivo o navegador.'
+                : 'Organiza tus recibos por listas y controla tus gastos del mes.'}
             </p>
           </div>
 
