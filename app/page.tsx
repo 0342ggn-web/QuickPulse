@@ -61,16 +61,19 @@ export default function Home() {
   const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
   const [showNudgeBalloon, setShowNudgeBalloon] = useState(false);
 
-  // Cargar datos iniciales: si no ha iniciado sesión, usa localStorage; si sí, carga desde Supabase
+  // Cargar datos iniciales: si no ha iniciado sesión, usa localStorage; si sí, fusiona y carga desde Supabase
   useEffect(() => {
     if (!isLoaded) return;
 
     const savedListsRaw = localStorage.getItem('quickpulse_lists');
     const savedTransactionsRaw = localStorage.getItem('quickpulse_transactions');
+    const pendingTxRaw = localStorage.getItem('quickpulse_pending_tx');
+
     const localLists: ReceiptList[] | null = savedListsRaw ? JSON.parse(savedListsRaw) : null;
-    const localTransactions: Transaction[] | null = savedTransactionsRaw
+    const localTransactions: Transaction[] = savedTransactionsRaw
       ? JSON.parse(savedTransactionsRaw)
-      : null;
+      : [];
+    const pendingTx: Transaction | null = pendingTxRaw ? JSON.parse(pendingTxRaw) : null;
 
     if (!isSignedIn) {
       setCloudSynced(false);
@@ -80,9 +83,7 @@ export default function Home() {
       } else {
         setLists(DEFAULT_LISTS);
       }
-      if (localTransactions) {
-        setTransactions(localTransactions);
-      }
+      setTransactions(localTransactions);
       return;
     }
 
@@ -93,35 +94,54 @@ export default function Home() {
         const cloudData: { lists: ReceiptList[]; transactions: Transaction[] } =
           await res.json();
 
-        const hasCloudLists = cloudData.lists && cloudData.lists.length > 0;
-        const hasCloudTx = cloudData.transactions && cloudData.transactions.length > 0;
+        const cloudLists = cloudData.lists || [];
+        const cloudTx = cloudData.transactions || [];
 
-        if (hasCloudLists || hasCloudTx) {
-          const finalLists = hasCloudLists ? cloudData.lists : DEFAULT_LISTS;
-          const finalTx = cloudData.transactions || [];
-          setLists(finalLists);
-          setTransactions(finalTx);
-          if (finalLists.length > 0) setSelectedFormList(finalLists[0].id);
-        } else {
-          // Primera vez en la nube: subir listas por defecto o lo que haya probado en localStorage
-          const initialLists =
-            localLists && localLists.length > 0 ? localLists : DEFAULT_LISTS;
-          const initialTx = localTransactions || [];
+        // Combinar listas de la nube con las locales sin duplicar por id
+        const mergedListsMap = new Map<string, ReceiptList>();
+        const baseLists = cloudLists.length > 0 ? cloudLists : DEFAULT_LISTS;
+        baseLists.forEach((l) => mergedListsMap.set(l.id, l));
+        if (localLists) {
+          localLists.forEach((l) => {
+            if (!mergedListsMap.has(l.id)) mergedListsMap.set(l.id, l);
+          });
+        }
+        const mergedLists = Array.from(mergedListsMap.values());
 
-          setLists(initialLists);
-          setTransactions(initialTx);
-          if (initialLists.length > 0) setSelectedFormList(initialLists[0].id);
+        // Combinar recibos de la nube + los 2 de prueba locales + el 3.º pendiente al iniciar sesión
+        const mergedTxMap = new Map<number, Transaction>();
+        cloudTx.forEach((t) => mergedTxMap.set(t.id, t));
+        localTransactions.forEach((t) => mergedTxMap.set(t.id, t));
+        if (pendingTx) {
+          mergedTxMap.set(pendingTx.id, pendingTx);
+        }
 
+        const mergedTx = Array.from(mergedTxMap.values()).sort((a, b) => b.id - a.id);
+
+        setLists(mergedLists);
+        setTransactions(mergedTx);
+        if (mergedLists.length > 0) setSelectedFormList(mergedLists[0].id);
+
+        // Si había recibos/listas locales o un 3.º recibo pendiente, subirlos a Supabase
+        const hasNewToUpload =
+          cloudLists.length === 0 || localTransactions.length > 0 || Boolean(pendingTx);
+
+        if (hasNewToUpload) {
           await fetch('/api/data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action: 'sync_initial',
-              lists: initialLists,
-              transactions: initialTx,
+              lists: mergedLists,
+              transactions: mergedTx,
             }),
           });
         }
+
+        // Limpiar datos temporales de invitado una vez sincronizados en la nube
+        localStorage.removeItem('quickpulse_transactions');
+        localStorage.removeItem('quickpulse_pending_tx');
+        localStorage.removeItem('quickpulse_lists');
 
         setCloudSynced(true);
       } catch {
@@ -134,16 +154,16 @@ export default function Home() {
 
   // Mantener copia en localStorage solo para invitados (sin sesión)
   useEffect(() => {
-    if (!isSignedIn) {
+    if (!isSignedIn && isLoaded) {
       localStorage.setItem('quickpulse_lists', JSON.stringify(lists));
     }
-  }, [lists, isSignedIn]);
+  }, [lists, isSignedIn, isLoaded]);
 
   useEffect(() => {
-    if (!isSignedIn) {
+    if (!isSignedIn && isLoaded) {
       localStorage.setItem('quickpulse_transactions', JSON.stringify(transactions));
     }
-  }, [transactions, isSignedIn]);
+  }, [transactions, isSignedIn, isLoaded]);
 
   // Consultar estado de la prueba de 30 días en Supabase cuando inicia sesión
   useEffect(() => {
@@ -198,19 +218,6 @@ export default function Home() {
     e.preventDefault();
     if (!inputText || !inputAmount) return;
 
-    // 1. Permitir 2 recibos sin sesión; al 3.º pedir registro/inicio de sesión sin tarjeta
-    if (!isSignedIn && transactions.length >= GUEST_RECEIPT_LIMIT) {
-      openSignIn();
-      return;
-    }
-
-    // 2. Si inició sesión, no es Pro y ya pasaron sus 30 días de prueba, mostrar muro de suscripción
-    if (isSignedIn && !isPro && trialStatus?.isTrialExpired) {
-      setPaywallReason('trial_expired');
-      setShowPaywallAlert(true);
-      return;
-    }
-
     const targetList = activeListId === 'all' ? selectedFormList : activeListId;
 
     const newTransaction: Transaction = {
@@ -224,6 +231,22 @@ export default function Home() {
         year: 'numeric',
       }),
     };
+
+    // 1. Permitir 2 recibos sin sesión; al 3.º guardarlo como pendiente y abrir inicio de sesión
+    if (!isSignedIn && transactions.length >= GUEST_RECEIPT_LIMIT) {
+      localStorage.setItem('quickpulse_pending_tx', JSON.stringify(newTransaction));
+      setInputText('');
+      setInputAmount('');
+      openSignIn();
+      return;
+    }
+
+    // 2. Si inició sesión, no es Pro y ya pasaron sus 30 días de prueba, mostrar muro de suscripción
+    if (isSignedIn && !isPro && trialStatus?.isTrialExpired) {
+      setPaywallReason('trial_expired');
+      setShowPaywallAlert(true);
+      return;
+    }
 
     setTransactions([newTransaction, ...transactions]);
     setInputText('');
