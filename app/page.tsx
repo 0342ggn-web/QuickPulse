@@ -35,6 +35,40 @@ const DEFAULT_LISTS: ReceiptList[] = [
 const FREE_LIST_LIMIT = 3;
 const GUEST_RECEIPT_LIMIT = 2;
 
+const ICON_KEYWORDS: { keywords: string[]; icon: string }[] = [
+  { keywords: ['comida', 'super', 'mercado', 'compra', 'restaurante', 'cena', 'almuerzo', 'cafe', 'bar', 'pan', 'fruta'], icon: '🍔' },
+  { keywords: ['casa', 'hogar', 'alquiler', 'hipoteca', 'luz', 'agua', 'gas', 'internet', 'wifi', 'mueble', 'reforma', 'limpieza'], icon: '🏠' },
+  { keywords: ['ocio', 'fiesta', 'cine', 'salida', 'copas', 'juego', 'concierto', 'teatro', 'entretenimiento'], icon: '🎉' },
+  { keywords: ['coche', 'auto', 'gasolina', 'combustible', 'taller', 'parking', 'peaje', 'moto', 'itv', 'seguro'], icon: '🚗' },
+  { keywords: ['transporte', 'bus', 'metro', 'tren', 'taxi', 'uber', 'cabify', 'bici', 'patinete'], icon: '🚌' },
+  { keywords: ['viaje', 'vacaciones', 'vuelo', 'avion', 'hotel', 'escapada', 'maleta', 'playa'], icon: '✈️' },
+  { keywords: ['salud', 'medico', 'farmacia', 'dentista', 'hospital', 'medicina', 'optica', 'fisio'], icon: '🩺' },
+  { keywords: ['gimnasio', 'gym', 'deporte', 'entreno', 'padel', 'futbol', 'yoga', 'piscina', 'running'], icon: '🏋️' },
+  { keywords: ['ropa', 'moda', 'zapatos', 'tienda', 'compras', 'zara', 'peluqueria', 'estetica'], icon: '🛍️' },
+  { keywords: ['mascota', 'perro', 'gato', 'veterinario', 'pienso'], icon: '🐾' },
+  { keywords: ['suscripcion', 'netflix', 'spotify', 'streaming', 'plataforma', 'movil', 'telefono'], icon: '📱' },
+  { keywords: ['estudio', 'curso', 'libro', 'universidad', 'colegio', 'academia', 'idioma'], icon: '📚' },
+  { keywords: ['regalo', 'cumple', 'boda', 'navidad', 'detalle'], icon: '🎁' },
+  { keywords: ['ahorro', 'inversion', 'banco', 'hucha', 'extra'], icon: '💰' },
+  { keywords: ['trabajo', 'oficina', 'autonomo', 'factura', 'herramienta'], icon: '💼' },
+  { keywords: ['bebe', 'nino', 'panales', 'guarderia', 'juguete'], icon: '🧸' },
+];
+
+function getIconForListName(name: string): string {
+  const normalized = name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  for (const entry of ICON_KEYWORDS) {
+    if (entry.keywords.some((kw) => normalized.includes(kw))) {
+      return entry.icon;
+    }
+  }
+
+  return '📌';
+}
+
 export default function Home() {
   const { isSignedIn, user, isLoaded } = useUser();
   const { openSignIn } = useClerk();
@@ -371,10 +405,11 @@ export default function Home() {
       return;
     }
 
+    const trimmedName = newListName.trim();
     const newList: ReceiptList = {
       id: `list_${Date.now()}`,
-      name: newListName.trim(),
-      icon: '📁',
+      name: trimmedName,
+      icon: getIconForListName(trimmedName),
     };
 
     setLists([...lists, newList]);
@@ -540,9 +575,9 @@ export default function Home() {
             </span>
 
             <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight mb-3 text-white leading-snug sm:leading-tight">
-              ¡Te doy la bienvenida a QuickPulse!{' '}
+              ¡Te doy la bienvenida a QuickPulse{' '}
               <span className="text-indigo-400 font-normal text-base sm:text-2xl whitespace-nowrap">
-                ¡(que el nombre no te engañe)!
+                (que el nombre no te engañe)!
               </span>
             </h2>
 
