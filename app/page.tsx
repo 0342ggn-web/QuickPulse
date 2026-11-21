@@ -47,6 +47,13 @@ export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [cloudSynced, setCloudSynced] = useState(false);
 
+  // Estado de pestañas desplegables por lista (abiertas por defecto)
+  const [expandedLists, setExpandedLists] = useState<Record<string, boolean>>({
+    comida: true,
+    casa: true,
+    ocio: true,
+  });
+
   // Recordar si el usuario estuvo autenticado para limpiar al cerrar sesión
   const wasSignedInRef = useRef<boolean>(false);
 
@@ -63,6 +70,26 @@ export default function Home() {
   // Estados de prueba de 30 días y globo cada 10 días
   const [trialStatus, setTrialStatus] = useState<TrialStatus | null>(null);
   const [showNudgeBalloon, setShowNudgeBalloon] = useState(false);
+
+  // Asegurar que cualquier lista nueva o cargada tenga su estado en expandedLists
+  useEffect(() => {
+    setExpandedLists((prev) => {
+      const next = { ...prev };
+      lists.forEach((l) => {
+        if (next[l.id] === undefined) {
+          next[l.id] = true;
+        }
+      });
+      return next;
+    });
+  }, [lists]);
+
+  const toggleListAccordion = (listId: string) => {
+    setExpandedLists((prev) => ({
+      ...prev,
+      [listId]: !prev[listId],
+    }));
+  };
 
   // Cargar datos iniciales o limpiar al cerrar sesión
   useEffect(() => {
@@ -276,6 +303,7 @@ export default function Home() {
     }
 
     setTransactions([newTransaction, ...transactions]);
+    setExpandedLists((prev) => ({ ...prev, [targetList]: true }));
     setInputText('');
     setInputAmount('');
 
@@ -350,6 +378,7 @@ export default function Home() {
     };
 
     setLists([...lists, newList]);
+    setExpandedLists((prev) => ({ ...prev, [newList.id]: true }));
     setActiveListId(newList.id);
     setSelectedFormList(newList.id);
     setNewListName('');
@@ -396,6 +425,8 @@ export default function Home() {
   };
 
   const activeListObj = lists.find((l) => l.id === activeListId);
+  const visibleAccordions =
+    activeListId === 'all' ? lists : lists.filter((l) => l.id === activeListId);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-3 sm:p-6 md:p-10 overflow-x-hidden">
@@ -688,6 +719,7 @@ export default function Home() {
                     onClick={() => {
                       setActiveListId(list.id);
                       setSelectedFormList(list.id);
+                      setExpandedLists((prev) => ({ ...prev, [list.id]: true }));
                     }}
                     className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-2 ${
                       activeListId === list.id
@@ -775,64 +807,149 @@ export default function Home() {
             </button>
           </form>
 
-          {/* Lista de Últimos Movimientos */}
-          <h4 className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">
-            {activeListId === 'all'
-              ? 'Todos los Recibos'
-              : `Recibos en ${activeListObj?.name}`}
-          </h4>
+          {/* Desplegables por Lista de Recibos */}
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider">
+              {activeListId === 'all'
+                ? 'Recibos Agrupados por Lista'
+                : `Lista: ${activeListObj?.name}`}
+            </h4>
+            {visibleAccordions.length > 1 && (
+              <div className="flex items-center gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allOpen: Record<string, boolean> = {};
+                    lists.forEach((l) => (allOpen[l.id] = true));
+                    setExpandedLists(allOpen);
+                  }}
+                  className="text-slate-400 hover:text-cyan-300 transition cursor-pointer"
+                >
+                  Abrir todas
+                </button>
+                <span className="text-slate-600">·</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allClosed: Record<string, boolean> = {};
+                    lists.forEach((l) => (allClosed[l.id] = false));
+                    setExpandedLists(allClosed);
+                  }}
+                  className="text-slate-400 hover:text-cyan-300 transition cursor-pointer"
+                >
+                  Plegar todas
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="space-y-3">
-            {filteredTransactions.length === 0 ? (
-              <p className="text-slate-500 text-xs sm:text-sm italic text-center py-4">
-                No hay recibos en esta lista todavía. Añade el primero arriba.
-              </p>
-            ) : (
-              filteredTransactions.map((t) => {
-                const parentList = lists.find((l) => l.id === t.listId);
-                return (
-                  <div
-                    key={t.id}
-                    className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4"
+            {visibleAccordions.map((list) => {
+              const listTransactions = transactions.filter((t) => t.listId === list.id);
+              const listTotal = listTransactions.reduce((acc, t) => acc + t.amount, 0);
+              const isOpen = expandedLists[list.id] ?? true;
+
+              return (
+                <div
+                  key={list.id}
+                  className="bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden transition"
+                >
+                  {/* Barra / Pestaña desplegable de la lista */}
+                  <button
+                    type="button"
+                    onClick={() => toggleListAccordion(list.id)}
+                    aria-expanded={isOpen}
+                    className="w-full px-4 py-3.5 flex items-center justify-between gap-3 bg-slate-950/90 hover:bg-slate-900/90 transition text-left cursor-pointer"
                   >
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-sm sm:text-base text-white">{t.text}</span>
-                        {activeListId === 'all' && parentList && (
-                          <span className="text-[10px] sm:text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">
-                            {parentList.icon} {parentList.name}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-slate-500">{t.date}</span>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800/80">
-                      <div
-                        className={`font-bold text-sm sm:text-base ${
-                          t.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        className={`text-xs text-cyan-400 transition-transform duration-200 ${
+                          isOpen ? 'rotate-90' : ''
                         }`}
                       >
-                        {t.amount > 0 ? `+${t.amount.toFixed(2)} €` : `${t.amount.toFixed(2)} €`}
-                      </div>
-                      <button
-                        onClick={() => handleDeleteTransaction(t.id)}
-                        className="text-slate-500 hover:text-rose-400 transition-colors p-1 cursor-pointer"
-                        title="Eliminar movimiento"
-                      >
-                        ✕
-                      </button>
+                        ▶
+                      </span>
+                      <span className="text-base">{list.icon}</span>
+                      <span className="font-bold text-sm sm:text-base text-white truncate">
+                        {list.name}
+                      </span>
+                      <span className="text-xs font-medium text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-full shrink-0">
+                        {listTransactions.length}{' '}
+                        {listTransactions.length === 1 ? 'recibo' : 'recibos'}
+                      </span>
                     </div>
-                  </div>
-                );
-              })
-            )}
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span
+                        className={`text-sm font-extrabold ${
+                          listTotal < 0 ? 'text-rose-400' : 'text-emerald-400'
+                        }`}
+                      >
+                        {listTotal.toLocaleString('es-ES', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{' '}
+                        €
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Contenido desplegable con los recibos de esta lista */}
+                  {isOpen && (
+                    <div className="p-3 sm:p-4 border-t border-slate-800/80 space-y-2.5 bg-slate-950/40">
+                      {listTransactions.length === 0 ? (
+                        <p className="text-slate-500 text-xs italic py-2 px-1">
+                          Aún no hay recibos apuntados en {list.name}.
+                        </p>
+                      ) : (
+                        listTransactions.map((t) => (
+                          <div
+                            key={t.id}
+                            className="bg-slate-900/70 border border-slate-800/70 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4"
+                          >
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium text-white text-sm">{t.text}</span>
+                              </div>
+                              <span className="text-xs text-slate-500">{t.date}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between sm:justify-end gap-3">
+                              <span
+                                className={`font-bold text-sm ${
+                                  t.amount < 0 ? 'text-rose-400' : 'text-emerald-400'
+                                }`}
+                              >
+                                {t.amount > 0 ? '+' : ''}
+                                {t.amount.toLocaleString('es-ES', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}{' '}
+                                €
+                              </span>
+                              <button
+                                onClick={() => handleDeleteTransaction(t.id)}
+                                title="Eliminar recibo"
+                                className="text-slate-500 hover:text-rose-400 text-xs transition cursor-pointer px-1"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="w-full max-w-6xl mx-auto text-center py-6 border-t border-slate-900 text-xs text-slate-500">
-        QuickPulse © 2026. Todos los derechos reservados.
+      <footer className="w-full max-w-4xl mx-auto pt-4 pb-2 text-center text-xs text-slate-600">
+        QuickPulse · Organiza tus recibos y controla tus gastos hormiga
       </footer>
     </main>
   );

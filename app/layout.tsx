@@ -12,6 +12,11 @@ const graffiti = Permanent_Marker({
 export const metadata: Metadata = {
   title: 'QuickPulse',
   description: 'Organiza tus recibos por listas y controla tus gastos del mes.',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  },
 };
 
 export default function RootLayout({
