@@ -540,9 +540,9 @@ export default function Home() {
             </span>
 
             <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight mb-3 text-white leading-snug sm:leading-tight">
-              ¡Te doy la bienvenida a QuickPulse{' '}
+              ¡Te doy la bienvenida a QuickPulse!{' '}
               <span className="text-indigo-400 font-normal text-base sm:text-2xl whitespace-nowrap">
-                (que el nombre no te engañe)!
+                ¡(que el nombre no te engañe)!
               </span>
             </h2>
 
