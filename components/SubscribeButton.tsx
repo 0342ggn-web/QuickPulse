@@ -1,25 +1,48 @@
 'use client';
 
+import { useState } from 'react';
+
 export default function SubscribeButton() {
-  const handleSubscribe = () => {
-    const checkoutUrl = process.env.NEXT_PUBLIC_POLAR_CHECKOUT_URL;
+  const [loading, setLoading] = useState(false);
 
-    if (!checkoutUrl) {
-      console.error('La URL de checkout de Polar no está configurada.');
-      alert('La URL de pago de Polar no está configurada en .env.local');
-      return;
+  const handleSubscribe = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          couponId: 'LANZAMIENTO339',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.url) {
+        throw new Error(data?.error || 'No se pudo iniciar el pago con Stripe.');
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Error al iniciar el checkout de Stripe:', error);
+      alert('No se pudo abrir la pasarela de pago. Revisa la configuración de Stripe.');
+      setLoading(false);
     }
-
-    // Redirige directamente al enlace oficial de Polar
-    window.location.href = checkoutUrl;
   };
 
   return (
     <button
+      type="button"
       onClick={handleSubscribe}
-      className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow transition-colors"
+      disabled={loading}
+      className="px-6 py-3 bg-amber-400 hover:bg-amber-300 disabled:opacity-60 text-slate-950 font-bold rounded-xl shadow transition-colors cursor-pointer"
     >
-      ¡SUSCRIBETE YA! QuickPulse Pro (4,99 €/mes) POR TIEMPO LIMITADO.
+      {loading
+        ? 'Redirigiendo a Stripe...'
+        : '¡SUSCRÍBETE YA! QuickPulse Pro: 3,39 € el 1.er mes (luego 4,99 €/mes)'}
     </button>
   );
 }
