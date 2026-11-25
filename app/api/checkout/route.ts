@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const couponId = typeof body?.couponId === 'string' ? body.couponId : undefined;
 
     const priceMapping: Record<string, string> = {
-      monthly: 'price_1UY98RLEgmrxU99QwODCEOM1',
+      monthly: 'price_1UfjSlLqdkEIygKeSCEeoJAz',
       quarterly: 'price_1UY98RLEgmrxU99QlfIJAmA0',
       yearly: 'price_1UY98RLEgmrxU99QFHFrzeEh',
     };
